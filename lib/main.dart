@@ -32,14 +32,17 @@ Future<void> start(final req, final res) async {
     print(
         "Environment variables are not set. Function cannot use Appwrite SDK.");
   } else {
+    // Init client
     client
         .setEndpoint(req.variables['APPWRITE_FUNCTION_ENDPOINT'])
         .setProject(req.variables['APPWRITE_FUNCTION_PROJECT_ID'])
         .setKey(req.variables['APPWRITE_FUNCTION_API_KEY'])
         .setSelfSigned(status: true);
 
+    // count = sum of all deleted documents, innercount = paginated documents from appwrite
     int count = 0;
     int innercount = 0;
+    // loop until innercount < 0, = database is empty
     do {
       await database
           .listDocuments(
@@ -55,10 +58,12 @@ Future<void> start(final req, final res) async {
               collectionId: req.variables['COLLECTION_ID'],
               documentId: element.$id);
         });
+        // respond occured error message, if happend
       }).onError((error, stackTrace) {
         res.json({'error': error.toString()});
       });
     } while (innercount > 0);
+    // respond sum of all deleted documents
     res.json({'total documents deleted': count});
   }
 }
